@@ -4,9 +4,9 @@ import requests
 
 from firecrawl import FirecrawlApp
 
-app = FirecrawlApp(api_key='fc-009c4674d2a546499ceadee60aa10da4')
+app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_API_KEY'))
 
-FIRECRAWL_API_KEY = "fc-009c4674d2a546499ceadee60aa10da4"
+FIRECRAWL_API_KEY = os.getenv('FIRECRAWL_API_KEY')
 FIRECRAWL_URL = "https://api.firecrawl.dev/v1/scrape"
 
 def scrape_with_firecrawl(url):
