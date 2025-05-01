@@ -45,15 +45,15 @@ def scrape_url(url):
 
 # Streamlit UI
 st.set_page_config(page_title="Kendra Search", layout="centered")
-st.title("🔍 Search with Amazon Kendra")
+st.title("🔍 Search Open Cities Data")
 
-mode = st.radio("Choose a mode:", ["Search Kendra", "Scrape URL"])
+mode = st.radio("Choose a mode:", ["Search Data", "Scrape URL"])
 
 user_input = st.text_input("Enter your query or URL", "", placeholder="Type your query or URL...")
 
 if st.button("Go") or user_input:
-    if mode == "Search Kendra":
-        with st.spinner("Searching Kendra..."):
+    if mode == "Search Data":
+        with st.spinner("Searching Data..."):
             results = query_kendra(user_input)
         if results:
             for r in results:
@@ -61,7 +61,7 @@ if st.button("Go") or user_input:
                 st.markdown(f"### Source: [{r['title']}]({r['link']})")
         else:
             st.info("No results found.")
-    else:  # Scrape URL
+    else:  
         with st.spinner("Scraping and uploading..."):
             pdf_url = scrape_url(user_input)
         if pdf_url:
