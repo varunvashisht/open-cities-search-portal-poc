@@ -1,10 +1,16 @@
 import streamlit as st
+import requests
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuration
-KENDRA_INDEX_ID = 'ddb9f433-6cbd-405e-a821-01a91c5b5d23'  # Replace with your Kendra Index ID
-AWS_REGION = 'ap-south-1'  # e.g., 'us-east-1'
+KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID')
+AWS_REGION = 'us-east-2'
+FLASK_API_URL = "http://127.0.0.1:5000"  
 
 @st.cache_resource
 def get_kendra_client():
@@ -27,21 +33,39 @@ def query_kendra(query):
     except (BotoCoreError, ClientError) as e:
         return [{"title": "Error", "excerpt": str(e), "link": "#"}]
 
+def scrape_url(url):
+    try:
+        resp = requests.post(f"{FLASK_API_URL}/scrape-to-pdf", json={"url": url})
+        if resp.ok:
+            return resp.json().get("pdf_url")
+        else:
+            return None
+    except Exception as e:
+        return None
+
 # Streamlit UI
 st.set_page_config(page_title="Kendra Search", layout="centered")
 st.title("🔍 Search with Amazon Kendra")
 
-# Search bar
-query = st.text_input("Enter your query", "", placeholder="Type something and press Enter...")
+mode = st.radio("Choose a mode:", ["Search Kendra", "Scrape URL"])
 
-if st.button("Search") or query:
-    with st.spinner("Searching..."):
-        results = query_kendra(query)
+user_input = st.text_input("Enter your query or URL", "", placeholder="Type your query or URL...")
 
-    if results:
-        for r in results:
-            st.markdown(f"{r['excerpt']}")
-            st.markdown(f"### Source: [{r['title']}]({r['link']})")
-            #st.markdown("---")
-    else:
-        st.info("No results found.")
+if st.button("Go") or user_input:
+    if mode == "Search Kendra":
+        with st.spinner("Searching Kendra..."):
+            results = query_kendra(user_input)
+        if results:
+            for r in results:
+                st.markdown(f"{r['excerpt']}")
+                st.markdown(f"### Source: [{r['title']}]({r['link']})")
+        else:
+            st.info("No results found.")
+    else:  # Scrape URL
+        with st.spinner("Scraping and uploading..."):
+            pdf_url = scrape_url(user_input)
+        if pdf_url:
+            st.success("Scraped and uploaded to S3!")
+            st.markdown(f"[📄 View scraped content]({pdf_url})")
+        else:
+            st.error("Failed to scrape or upload.")

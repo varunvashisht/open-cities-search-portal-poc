@@ -3,6 +3,7 @@ import uuid
 from flask import Flask, request, jsonify
 import boto3
 import os
+from dotenv import load_dotenv
 
 from firecrawlHelper import scrape, scrape_with_firecrawl
 from pdfHelper import generate_text_file
@@ -10,9 +11,11 @@ from awsHelper import upload_to_s3
 
 app = Flask(__name__)
 
+load_dotenv()
+
 # AWS Kendra Setup
-KENDRA_INDEX_ID = "ddb9f433-6cbd-405e-a821-01a91c5b5d23"      #os.getenv('KENDRA_INDEX_ID')  # Set in environment variables
-kendra_client = boto3.client('kendra', region_name='ap-south-1')  # Change region if needed
+KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID')  # Set in environment variables
+kendra_client = boto3.client('kendra', region_name='us-east-2')  # Change region if needed
 
 
 @app.route('/search', methods=['GET'])
@@ -77,4 +80,5 @@ def scrape_to_pdf():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
+

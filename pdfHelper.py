@@ -39,7 +39,6 @@ def generate_pdf(content, filename):
     pdf.set_font("DejaVu", "", 10)
 
     def safe_wrap(line, max_chars=80):
-        # Break long lines safely at character level
         return [line[i:i+max_chars] for i in range(0, len(line), max_chars)]
 
     for paragraph in content.splitlines():
@@ -51,7 +50,6 @@ def generate_pdf(content, filename):
             try:
                 pdf.multi_cell(0, 10, wrapped_line)
             except Exception as e:
-                # Replace non-renderable characters
                 cleaned = ''.join(c if c.isprintable() else '?' for c in wrapped_line)
                 pdf.multi_cell(0, 10, cleaned)
 

@@ -1,8 +1,11 @@
 import os
 
 import requests
+from dotenv import load_dotenv
 
 from firecrawl import FirecrawlApp
+
+load_dotenv()
 
 app = FirecrawlApp(api_key=os.getenv('FIRECRAWL_API_KEY'))
 

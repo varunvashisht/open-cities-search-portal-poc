@@ -1,11 +1,11 @@
 import boto3
 
 
-S3_BUCKET = 'granicus'
-AWS_REGION = 'ap-south-1'
+S3_BUCKET = 'genai-poc-s3-bucket'
+AWS_REGION = 'us-east-2'
 
 # AWS S3 client
-s3_client = boto3.client('s3', region_name='ap-south-1')
+s3_client = boto3.client('s3', region_name='us-east-2')
 
 def upload_to_s3(filepath, filename):
     with open(filepath, "rb") as f:

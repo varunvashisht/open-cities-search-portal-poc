@@ -1,10 +1,11 @@
 import streamlit as st
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
+import os
 
 # Configuration
-KENDRA_INDEX_ID = 'ddb9f433-6cbd-405e-a821-01a91c5b5d23'  # Replace with your Kendra Index ID
-AWS_REGION = 'ap-south-1'  # e.g., 'us-east-1'
+KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID') 
+AWS_REGION = 'us-east-2'  # e.g., 'us-east-1'
 
 # Initialize Kendra client
 @st.cache_resource
