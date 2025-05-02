@@ -14,6 +14,7 @@ app = FirecrawlApp(api_key=FIRECRAWL_API_KEY)
 def scrape_with_firecrawl(url, only_main_content=True):
     """
     Uses raw HTTP request to Firecrawl API for partial/full scraping.
+    Returns a tuple: (markdown_content, full_response)
     """
     try:
         headers = {
@@ -36,10 +37,12 @@ def scrape_with_firecrawl(url, only_main_content=True):
         resp = requests.post(FIRECRAWL_URL, json=payload, headers=headers)
         resp.raise_for_status()
         data = resp.json()
-        return data["data"]["markdown"]
+        markdown = data["data"]["markdown"]
+        return markdown, data
     except Exception as e:
         print("[scrape_with_firecrawl] Error:", e)
-        return None
+        return None, None
+
 
 def scrape(url):
 

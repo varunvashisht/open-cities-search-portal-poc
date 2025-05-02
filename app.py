@@ -1,27 +1,28 @@
-# app.py
 import uuid
 from flask import Flask, request, jsonify
 import boto3
 import os
 from dotenv import load_dotenv
 import traceback
+import pandas as pd
+from io import BytesIO
+from pandas import json_normalize
 
 from firecrawlHelper import scrape, scrape_with_firecrawl
-from pdfHelper import generate_text_file, generate_pdf
+from pdfHelper import generate_pdf
 from awsHelper import upload_to_s3
 
 app = Flask(__name__)
-
 load_dotenv()
 
-# AWS Kendra Setup
-KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID')  # Set in environment variables
-kendra_client = boto3.client('kendra', region_name='us-east-2')  # Change region if needed
+KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID')
+kendra_client = boto3.client('kendra', region_name='us-east-2')
 
 
 @app.route('/search', methods=['GET'])
 def hello():
     return jsonify({"results": "success"})
+
 
 @app.route('/search', methods=['POST'])
 def search_kendra():
@@ -36,8 +37,7 @@ def search_kendra():
             IndexId=KENDRA_INDEX_ID,
             QueryText=query_text
         )
-        
-        # Extracting some useful fields
+
         results = []
         for item in response.get('ResultItems', []):
             result = {
@@ -52,72 +52,54 @@ def search_kendra():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-# @app.route('/scrape-to-pdf', methods=['POST'])
-# def scrape_to_pdf():
-#     data = request.get_json()
-#     url = data.get("url")
-    
-#     if not url:
-#         return jsonify({"error": "URL is required"}), 400
-
-#     try:
-#         # Scrape the site
-#         content = scrape_with_firecrawl(url)
-#         if not content:
-#             return jsonify({"error": "Failed to extract content"}), 500
-
-#         # Create PDF
-#         file_id = str(uuid.uuid4())
-#         filename = f"{file_id}.txt"
-#         text_path = generate_text_file(content, file_id)
-
-#         # Upload to S3
-#         s3_url = upload_to_s3(text_path, filename)
-
-#         return jsonify({"pdf_url": s3_url})
-
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
 
 
 @app.route('/scrape-to-pdf', methods=['POST'])
 def scrape_to_pdf():
     data = request.get_json()
     url = data.get("url")
-    mode = data.get("mode", "partial") 
+    mode = data.get("mode", "partial")
 
     if not url:
         return jsonify({"error": "URL is required"}), 400
 
     try:
         if mode == "partial":
-            content = scrape_with_firecrawl(url, only_main_content=True)
+            markdown, full_response = scrape_with_firecrawl(url, only_main_content=True)
         elif mode == "full":
-            content = scrape_with_firecrawl(url, only_main_content=False)
+            markdown, full_response = scrape_with_firecrawl(url, only_main_content=False)
         elif mode == "crawl":
-            print("Not implemented")
-            # content = scrape(url) 
+            return jsonify({"error": "Crawl mode not implemented yet"}), 400
         else:
             return jsonify({"error": f"Unknown mode: {mode}"}), 400
 
-        if not content:
+        if not markdown or not full_response:
             return jsonify({"error": "Failed to extract content"}), 500
 
         file_id = str(uuid.uuid4())
-        filename = f"{file_id}.pdf"
-        pdf_path = generate_pdf(content, file_id)  
 
-        # Upload to S3
-        s3_url = upload_to_s3(pdf_path, filename)
+        pdf_path = generate_pdf(markdown, file_id)
+        pdf_filename = f"{file_id}.pdf"
+        pdf_s3_url = upload_to_s3(pdf_path, pdf_filename)
 
-        return jsonify({"pdf_url": s3_url})
+        flat_df = json_normalize(full_response)
+
+        buffer = BytesIO()
+        flat_df.to_parquet(buffer, index=False)
+        buffer.seek(0)
+
+        parquet_filename = f"scraped_parquets/{file_id}.parquet"
+        parquet_s3_url = upload_to_s3(buffer, parquet_filename)
+
+        return jsonify({
+            "pdf_url": pdf_s3_url,
+            "parquet_url": parquet_s3_url
+        })
 
     except Exception as e:
         print("Exception during /scrape-to-pdf:", str(e))
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 
 if __name__ == '__main__':
