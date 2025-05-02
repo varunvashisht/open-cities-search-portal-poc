@@ -81,26 +81,33 @@ def search_kendra():
 #         return jsonify({"error": str(e)}), 500
 
 
-
 @app.route('/scrape-to-pdf', methods=['POST'])
 def scrape_to_pdf():
     data = request.get_json()
     url = data.get("url")
-    
+    mode = data.get("mode", "partial") 
+
     if not url:
         return jsonify({"error": "URL is required"}), 400
 
     try:
-        # Scrape the site
-        content = scrape_with_firecrawl(url)
+        if mode == "partial":
+            content = scrape_with_firecrawl(url, only_main_content=True)
+        elif mode == "full":
+            content = scrape_with_firecrawl(url, only_main_content=False)
+        elif mode == "crawl":
+            print("Not implemented")
+            # content = scrape(url) 
+        else:
+            return jsonify({"error": f"Unknown mode: {mode}"}), 400
+
         if not content:
             return jsonify({"error": "Failed to extract content"}), 500
 
-        # Create PDF instead of text file
         file_id = str(uuid.uuid4())
         filename = f"{file_id}.pdf"
         pdf_path = generate_pdf(content, file_id)  
-        
+
         # Upload to S3
         s3_url = upload_to_s3(pdf_path, filename)
 
@@ -110,6 +117,7 @@ def scrape_to_pdf():
         print("Exception during /scrape-to-pdf:", str(e))
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':

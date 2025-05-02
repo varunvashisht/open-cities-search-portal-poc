@@ -30,9 +30,12 @@ def query_kendra(query):
     except (BotoCoreError, ClientError) as e:
         return [{"title": "Error", "excerpt": str(e), "link": "#"}]
 
-def scrape_url(url):
+def scrape_url(url, mode="partial"):
     try:
-        resp = requests.post(f"{FLASK_API_URL}/scrape-to-pdf", json={"url": url})
+        resp = requests.post(
+            f"{FLASK_API_URL}/scrape-to-pdf",
+            json={"url": url, "mode": mode}
+        )
         if resp.ok:
             return resp.json().get("pdf_url")
         else:
@@ -86,7 +89,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Input + info icon in same row
 col1, col2 = st.columns([0.9, 0.1])
 with col1:
     user_input = st.text_input("Enter your query or URL", "", placeholder="Type your query or URL...")
@@ -97,8 +99,11 @@ with col2:
         </div>
     """, unsafe_allow_html=True)
 
+if mode == "Scrape URL":
+    scrape_mode = st.selectbox("Scraping mode", ["partial", "full", "crawl"])
+
 # Action
-if st.button("Go") or user_input:
+if st.button("Go"):
     if mode == "Search Data":
         with st.spinner("Searching Data..."):
             result = query_kendra(user_input)
@@ -108,7 +113,7 @@ if st.button("Go") or user_input:
             st.info("No results found.")
     else:
         with st.spinner("Scraping and uploading..."):
-            pdf_url = scrape_url(user_input)
+            pdf_url = scrape_url(user_input, scrape_mode)
         if pdf_url:
             st.success("Scraped and uploaded to S3!")
             st.markdown(f"[📄 View scraped content]({pdf_url})")
