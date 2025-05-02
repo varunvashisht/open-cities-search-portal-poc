@@ -4,9 +4,10 @@ from flask import Flask, request, jsonify
 import boto3
 import os
 from dotenv import load_dotenv
+import traceback
 
 from firecrawlHelper import scrape, scrape_with_firecrawl
-from pdfHelper import generate_text_file
+from pdfHelper import generate_text_file, generate_pdf
 from awsHelper import upload_to_s3
 
 app = Flask(__name__)
@@ -52,6 +53,35 @@ def search_kendra():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+# @app.route('/scrape-to-pdf', methods=['POST'])
+# def scrape_to_pdf():
+#     data = request.get_json()
+#     url = data.get("url")
+    
+#     if not url:
+#         return jsonify({"error": "URL is required"}), 400
+
+#     try:
+#         # Scrape the site
+#         content = scrape_with_firecrawl(url)
+#         if not content:
+#             return jsonify({"error": "Failed to extract content"}), 500
+
+#         # Create PDF
+#         file_id = str(uuid.uuid4())
+#         filename = f"{file_id}.txt"
+#         text_path = generate_text_file(content, file_id)
+
+#         # Upload to S3
+#         s3_url = upload_to_s3(text_path, filename)
+
+#         return jsonify({"pdf_url": s3_url})
+
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
+
+
 @app.route('/scrape-to-pdf', methods=['POST'])
 def scrape_to_pdf():
     data = request.get_json()
@@ -66,19 +96,21 @@ def scrape_to_pdf():
         if not content:
             return jsonify({"error": "Failed to extract content"}), 500
 
-        # Create PDF
+        # Create PDF instead of text file
         file_id = str(uuid.uuid4())
-        filename = f"{file_id}.txt"
-        text_path = generate_text_file(content, file_id)
-
+        filename = f"{file_id}.pdf"
+        pdf_path = generate_pdf(content, file_id)  
+        
         # Upload to S3
-        s3_url = upload_to_s3(text_path, filename)
+        s3_url = upload_to_s3(pdf_path, filename)
 
         return jsonify({"pdf_url": s3_url})
 
     except Exception as e:
+        print("Exception during /scrape-to-pdf:", str(e))
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)
-

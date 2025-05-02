@@ -28,7 +28,6 @@ def query_kendra(question):
     except (BotoCoreError, ClientError) as e:
         return [f"Error querying Kendra: {str(e)}"]
 
-# UI setup
 st.title("💬 Chat with Amazon Kendra")
 st.markdown("Ask a question and get answers powered by Amazon Kendra.")
 
