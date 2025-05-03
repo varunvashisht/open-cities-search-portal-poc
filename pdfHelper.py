@@ -3,8 +3,11 @@ import re
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.pagesizes import A4
-import os
 import textwrap
+from awsHelper import upload_to_s3
+import uuid
+import pandas as pd
+from io import BytesIO
 
 
 # def generate_pdf(content, filename):
@@ -57,3 +60,32 @@ def generate_text_file(content, filename):
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
     return filepath
+
+
+def process_and_upload_scraped_data(markdown_text, url_val, title_val):
+    file_id = f"{uuid.uuid4()}___{url_val}"
+    pdf_path = generate_pdf(markdown_text, file_id)
+    pdf_filename = f"websites_pdf/{file_id}.pdf"
+    pdf_s3_url = upload_to_s3(pdf_path, pdf_filename)
+
+    CHUNK_SIZE = 30000
+    chunks = [markdown_text[i:i + CHUNK_SIZE] for i in range(0, len(markdown_text), CHUNK_SIZE)]
+
+    data_dict = {f"data_col_{i+1}": [chunk] for i, chunk in enumerate(chunks)}
+    data_dict["url"] = [url_val]
+    data_dict["title"] = [title_val.strip()]
+    df = pd.DataFrame(data_dict)
+
+    buffer = BytesIO()
+    df.to_parquet(buffer, index=False)
+    buffer.seek(0)
+
+    parquet_id = file_id.split("___")[0]
+    parquet_filename = f"websites_data/{parquet_id}.parquet"
+    parquet_s3_url = upload_to_s3(buffer, parquet_filename)
+
+    return {
+        "pdf_url": pdf_s3_url,
+        "parquet_url": parquet_s3_url,
+        "file_id": file_id
+    }

@@ -7,9 +7,12 @@ import traceback
 import pandas as pd
 from io import BytesIO
 from pandas import json_normalize
+import re
+from urllib.parse import urlparse
 
-from firecrawlHelper import scrape, scrape_with_firecrawl
-from pdfHelper import generate_pdf
+
+from firecrawlHelper import scrape, scrape_with_firecrawl, crawl_with_firecrawl
+from pdfHelper import process_and_upload_scraped_data
 from awsHelper import upload_to_s3
 
 app = Flask(__name__)
@@ -53,7 +56,6 @@ def search_kendra():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route('/scrape-to-pdf', methods=['POST'])
 def scrape_to_pdf():
     data = request.get_json()
@@ -64,36 +66,49 @@ def scrape_to_pdf():
         return jsonify({"error": "URL is required"}), 400
 
     try:
-        if mode == "partial":
-            markdown, full_response = scrape_with_firecrawl(url, only_main_content=True)
-        elif mode == "full":
-            markdown, full_response = scrape_with_firecrawl(url, only_main_content=False)
+        if mode in ("partial", "full"):
+            only_main = mode == "partial"
+            markdown, full_response = scrape_with_firecrawl(url, only_main_content=only_main)
+            if not markdown or not full_response:
+                return jsonify({"error": "Failed to extract content"}), 500
+
+            markdown_text = full_response.get("data", {}).get("markdown", "")
+            original_url = full_response.get("data", {}).get("metadata", {}).get("url", url)
+            parsed = urlparse(original_url)
+            url_val = parsed.netloc
+            title_val = full_response.get("data", {}).get("metadata", {}).get("title", "")
+        
         elif mode == "crawl":
-            return jsonify({"error": "Crawl mode not implemented yet"}), 400
+            crawl_result = crawl_with_firecrawl(url)
+            print("Crawl Result: ", crawl_result)
+            if not crawl_result:
+                return jsonify({"error": "Crawl failed or timed out"}), 500
+
+            data = crawl_result.get("data", [])
+            if not isinstance(data, list) or len(data) == 0:
+                return jsonify({"error": "No pages found in crawl"}), 404
+
+            combined_markdown = ""
+            for idx, page in enumerate(data):
+                page_markdown = page.get("markdown", "")
+                page_title = page.get("metadata", {}).get("title", f"Page {idx + 1}")
+                combined_markdown += f"\n\n# {page_title}\n\n{page_markdown}"
+
+            markdown_text = combined_markdown
+            title_val = data[0].get("metadata", {}).get("title", "")
+            parsed = urlparse(url)
+            url_val = parsed.netloc
+
+
         else:
             return jsonify({"error": f"Unknown mode: {mode}"}), 400
 
-        if not markdown or not full_response:
-            return jsonify({"error": "Failed to extract content"}), 500
-
-        file_id = str(uuid.uuid4())
-
-        pdf_path = generate_pdf(markdown, file_id)
-        pdf_filename = f"{file_id}.pdf"
-        pdf_s3_url = upload_to_s3(pdf_path, pdf_filename)
-
-        flat_df = json_normalize(full_response)
-
-        buffer = BytesIO()
-        flat_df.to_parquet(buffer, index=False)
-        buffer.seek(0)
-
-        parquet_filename = f"scraped_parquets/{file_id}.parquet"
-        parquet_s3_url = upload_to_s3(buffer, parquet_filename)
+        url_cleaned = re.sub(r'\W+', '_', url_val)[:50] 
+        result = process_and_upload_scraped_data(markdown_text, url_cleaned, title_val.strip())
 
         return jsonify({
-            "pdf_url": pdf_s3_url,
-            "parquet_url": parquet_s3_url
+            "pdf_url": result["pdf_url"],
+            "parquet_url": result["parquet_url"]
         })
 
     except Exception as e:

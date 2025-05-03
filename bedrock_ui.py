@@ -21,7 +21,8 @@ def query_bedrock_knowledge_base(query):
             retrieveAndGenerateConfiguration={
                 "knowledgeBaseConfiguration": {
                     "knowledgeBaseId": BEDROCK_KB_ID,
-                    "modelArn": "arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-3-7-sonnet-20250219-v1:0"
+                    "modelArn": "arn:aws:bedrock:us-east-2:358607849468:inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+                    # "inferenceConfigurationArn": "arn:aws:bedrock:us-east-2:358607849468:inference-profile/us.anthropic.claude-3-7-sonnet-20250219-v1:0"
                 },
                 "type": "KNOWLEDGE_BASE"
             }
@@ -32,12 +33,12 @@ def query_bedrock_knowledge_base(query):
 
 # ----------------- Streamlit UI -----------------
 
-st.set_page_config(page_title="Bedrock KB Search", layout="centered")
+st.set_page_config(page_title="AI KB Search", layout="centered")
 st.title("🧠 Ask AI")
 
 query = st.text_input("Ask a question", "", placeholder="e.g., When is the next meeting?")
 
 if st.button("Submit") or query:
-    with st.spinner("Querying Bedrock..."):
+    with st.spinner("Querying Knowledge Base..."):
         answer = query_bedrock_knowledge_base(query)
     st.markdown(answer)
