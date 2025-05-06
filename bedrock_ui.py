@@ -31,7 +31,6 @@ def query_bedrock_knowledge_base(query):
     except (BotoCoreError, ClientError) as e:
         return f"Error: {str(e)}"
 
-# ----------------- Streamlit UI -----------------
 
 st.set_page_config(page_title="AI KB Search", layout="centered")
 st.title("🧠 Ask AI")

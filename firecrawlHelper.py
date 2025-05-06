@@ -12,7 +12,6 @@ FIRECRAWL_API_KEY = os.getenv('FIRECRAWL_API_KEY')
 FIRECRAWL_URL = "https://api.firecrawl.dev/v1/scrape"
 FIRECRAWL_CRAWL_URL = "https://api.firecrawl.dev/v1/crawl"
 
-# Firecrawl SDK app
 app = FirecrawlApp(api_key=FIRECRAWL_API_KEY)
 
 def scrape_with_firecrawl(url, only_main_content=True):
@@ -88,7 +87,7 @@ def crawl_with_firecrawl(url):
     crawl_id = data.get("id")
 
     if not crawl_id:
-        print("❌ No crawl ID returned.")
+        print("No crawl ID returned.")
         return
 
     print("⏳ Polling for crawl completion...")
@@ -103,8 +102,8 @@ def crawl_with_firecrawl(url):
         print(f"Attempt {attempt + 1}: Status = {status}")
 
         if status == "completed":
-            print("\n✅ Crawl completed.")
+            print("\nCrawl completed.")
             return result_data
 
-    print("❌ Timed out waiting for crawl to complete.")
+    print("Timed out waiting for crawl to complete.")
     return None

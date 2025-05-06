@@ -5,10 +5,8 @@ from botocore.exceptions import BotoCoreError, ClientError
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Configuration
 KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID')
 AWS_REGION = 'us-east-2'
 FLASK_API_URL = "http://127.0.0.1:5000"
@@ -32,7 +30,6 @@ def query_kendra(query):
 
         filename = document_uri.split("/")[-1] if document_uri else "Unknown"
 
-        # Extract scraped URL from filename if pattern matches uuid___url.pdf
         scraped_url = "Unknown"
         if "___" in filename:
             parts = filename.rsplit("___", 1)
@@ -68,7 +65,6 @@ def scrape_url(url, mode="partial"):
     except Exception:
         return None
 
-# Streamlit UI
 st.set_page_config(page_title="Kendra Search", layout="centered")
 st.title("🔍 Search Open Cities Data")
 

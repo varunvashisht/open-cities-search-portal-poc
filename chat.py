@@ -3,11 +3,9 @@ import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 import os
 
-# Configuration
 KENDRA_INDEX_ID = os.getenv('KENDRA_INDEX_ID') 
-AWS_REGION = 'us-east-2'  # e.g., 'us-east-1'
+AWS_REGION = 'us-east-2' 
 
-# Initialize Kendra client
 @st.cache_resource
 def get_kendra_client():
     return boto3.client('kendra', region_name=AWS_REGION)
@@ -34,7 +32,6 @@ st.markdown("Ask a question and get answers powered by Amazon Kendra.")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-# User input
 user_input = st.chat_input("Ask your question...")
 if user_input:
     st.session_state.chat_history.append(("user", user_input))
@@ -42,7 +39,6 @@ if user_input:
         kendra_responses = query_kendra(user_input)
     st.session_state.chat_history.append(("kendra", kendra_responses))
 
-# Display chat history
 for role, msg in st.session_state.chat_history:
     with st.chat_message(role):
         if isinstance(msg, list):

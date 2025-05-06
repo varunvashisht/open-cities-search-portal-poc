@@ -1,3 +1,10 @@
+'''
+    original draft
+    obsolete file
+    refer search.py, bedrock_ui.py, app.py for running
+    
+'''
+
 import os
 import re
 import boto3
@@ -13,17 +20,15 @@ firecrawl_api_key = os.getenv("FIRECRAWL_API_KEY")
 
 app = FirecrawlApp(api_key=firecrawl_api_key)
 
-# using the landing page (HOME) and the E-Permits page
 urls = ["https://denvergov.org/Home", "https://denvergov.org/Government/Agencies-Departments-Offices/Agencies-Departments-Offices-Directory/Community-Planning-and-Development/E-permits"]
 
-# Scraping 
+
 markdown_texts = []
 
 for url in urls:
     result = app.scrape_url(url, formats=["markdown"])  
     markdown_texts.append(result.markdown)
 
-# Preprocessing
 
 def preprocess_markdown(markdown):
     markdown = re.sub(r'``````', '', markdown, flags=re.DOTALL)
@@ -37,7 +42,6 @@ def preprocess_markdown(markdown):
 
 cleaned_texts = [preprocess_markdown(md) for md in markdown_texts]
 
-# Creating PDF and Saving in S3
 
 s3_client = boto3.client('s3')
 bucket_name = 'genai-poc-s3-bucket'
