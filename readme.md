@@ -70,11 +70,10 @@ pip install -r requirements.txt
   ## 📂 Project Structure
 ```plaintext
   ├── app.py               # Entry point for all services (Flask)
-  ├── search.py            # Streamlit UI
-  ├── awsHelper.py         # Kendra and Bedrock utility functions
-  ├── firecrawlHelper.py   # Firecrawl scraping interface
-  ├── pdfHelper.py         # PDF generation
-  ├── parquetHelper.py     # Parquet file creation
+  ├── search.py            # Kendra and Scraping UI
+  ├── awsHelper.py         # AWS S3 upload utility function
+  ├── firecrawlHelper.py   # Firecrawl scraping utility functions
+  ├── pdfHelper.py         # PDF and Parquet generation
   ├── bedrock_ui.py        # Claude-based chatbot UI
   ├── requirements.txt     # Dependencies
   ├── .env.example         # Environment variable template
