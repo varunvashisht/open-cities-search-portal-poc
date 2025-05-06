@@ -1,4 +1,4 @@
-# Open Cities Search Portal (Proof of Concept)
+# Open Cities Search Portal
 
 The **Open Cities Search Portal** is a proof-of-concept application that integrates advanced semantic search and conversational AI capabilities to help users explore city-related information. It combines AWS Kendra, Bedrock with Claude 3.7 Sonnet, Firecrawl for web scraping, and custom PDF/Parquet generation workflows.
 
