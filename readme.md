@@ -34,7 +34,7 @@ The **Open Cities Search Portal** is a proof-of-concept application that integra
 - API key for Firecrawl
 - Dremio instance (for Parquet querying)
 
-### 🚀 Steps
+### Steps
 
 1. **Clone the repo**
 
@@ -67,7 +67,7 @@ pip install -r requirements.txt
      ```
   Access the respective UI's through the links provided
 
-  ### 📂 Project Structure
+  ## 📂 Project Structure
 ```plaintext
   ├── app.py               # Entry point for all services (Flask)
   ├── search.py            # Streamlit UI
@@ -81,7 +81,7 @@ pip install -r requirements.txt
   └── readme.md            # Documentation
 ```
 
- ### 📊 Outputs
+ ## 📊 Outputs
  - **PDF:** Cleanly formatted documents from scraped data in S3. (`websites_pdfs`)
  - **Parquet:** Structured data shared with a Dremio instance for advanced querying and semantic access S3. (`websites_data`)
 
